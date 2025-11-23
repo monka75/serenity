@@ -362,7 +362,7 @@ pub struct Ready {
     /// Information about the user including email
     pub user: CurrentUser,
     /// Guilds the user is in
-    pub guilds: Vec<UnavailableGuild>,
+    pub guilds: Vec<Guild>,
     /// Used for resuming connections
     pub session_id: String,
     /// Gateway URL for resuming connections
