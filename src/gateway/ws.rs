@@ -132,6 +132,9 @@ impl WsClient {
                     why
                 })?;
 
+                // NEW: log final decoded payload
+                trace!("Incoming decompressed payload: {}", decompressed);
+
                 from_str(&decompressed).map_err(|why| {
                     warn!("Err deserializing bytes: {why:?}");
                     debug!("Failing bytes: {bytes:?}");
