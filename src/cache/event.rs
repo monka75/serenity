@@ -1,3 +1,4 @@
+use crate::all::ReadyGuild;
 use super::{Cache, CacheUpdate};
 use crate::model::channel::{GuildChannel, Message};
 use crate::model::event::{
@@ -483,25 +484,28 @@ impl CacheUpdate for ReadyEvent {
     fn update(&mut self, cache: &Cache) -> Option<()> {
         let ready = self.ready.clone();
 
-        // for unavailable in &ready.guilds {
-        //     cache.guilds.remove(&unavailable.id);
-        //     cache.unavailable_guilds.insert(unavailable.id, ());
-        // }
+        for self_guild_or_unavailable in &ready.guilds {
+            match self_guild_or_unavailable {
+                ReadyGuild::Guild(self_guild) => {
+                    let mut guild = self_guild.clone();
+                    cache.unavailable_guilds.remove(&self_guild.id);
 
-        for self_guild in &ready.guilds {
-            let mut guild = self_guild.clone();
-            cache.unavailable_guilds.remove(&self_guild.id);
+                    for (user_id, member) in &mut guild.members {
+                        cache.update_user_entry(&member.user);
+                        if let Some(u) = cache.user(user_id) {
+                            member.user = u.clone();
+                        }
+                    }
 
-            for (user_id, member) in &mut guild.members {
-                cache.update_user_entry(&member.user);
-                if let Some(u) = cache.user(user_id) {
-                    member.user = u.clone();
+                    cache.guilds.insert(self_guild.id, guild);
+                    for channel_id in self_guild.channels.keys() {
+                        cache.channels.insert(*channel_id, self_guild.id);
+                    }
                 }
-            }
-
-            cache.guilds.insert(self_guild.id, guild);
-            for channel_id in self_guild.channels.keys() {
-                cache.channels.insert(*channel_id, self_guild.id);
+                ReadyGuild::Unavailable(unavailable) => {
+                    cache.guilds.remove(&unavailable.id);
+                    cache.unavailable_guilds.insert(unavailable.id, ());
+                }
             }
         }
 

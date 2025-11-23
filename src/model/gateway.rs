@@ -349,6 +349,13 @@ pub struct Presence {
     pub client_status: Option<ClientStatus>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReadyGuild {
+    Guild(Guild),
+    Unavailable(UnavailableGuild),
+}
+
 /// An initial set of information given after IDENTIFYing to the gateway.
 ///
 /// [Discord docs](https://discord.com/developers/docs/topics/gateway#ready-ready-event-fields).
@@ -362,7 +369,7 @@ pub struct Ready {
     /// Information about the user including email
     pub user: CurrentUser,
     /// Guilds the user is in
-    pub guilds: Vec<Guild>,
+    pub guilds: Vec<ReadyGuild>,
     /// Used for resuming connections
     pub session_id: String,
     /// Gateway URL for resuming connections
