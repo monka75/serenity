@@ -142,14 +142,11 @@ impl WsClient {
                     why
                 })?
             },
-            Message::Text(payload) => {
-                trace!("Incoming payload: {}", payload);
+            Message::Text(payload) => from_str(&payload).map_err(|why| {
+                warn!("Err deserializing text: {why:?}; text: {payload}");
 
-                from_str(&payload).map_err(|why| {
-                    warn!("Err deserializing text: {why:?}; text: {}", payload);
-                    why
-                })?
-            }
+                why
+            })?,
             Message::Close(Some(frame)) => {
                 return Err(Error::Gateway(GatewayError::Closed(Some(frame))));
             },
