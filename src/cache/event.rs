@@ -484,11 +484,10 @@ impl CacheUpdate for ReadyEvent {
     fn update(&mut self, cache: &Cache) -> Option<()> {
         let ready = self.ready.clone();
 
-        for self_guild_or_unavailable in &ready.guilds {
-            match self_guild_or_unavailable {
-                ReadyGuild::Guild(self_guild) => {
-                    let mut guild = self_guild.clone();
-                    cache.unavailable_guilds.remove(&self_guild.id);
+        for guild_wrapper in ready.guilds {
+            match guild_wrapper {
+                ReadyGuild::Guild(mut guild) => {
+                    cache.unavailable_guilds.remove(&guild.id);
 
                     for (user_id, member) in &mut guild.members {
                         cache.update_user_entry(&member.user);
@@ -497,10 +496,11 @@ impl CacheUpdate for ReadyEvent {
                         }
                     }
 
-                    cache.guilds.insert(self_guild.id, guild);
-                    for channel_id in self_guild.channels.keys() {
-                        cache.channels.insert(*channel_id, self_guild.id);
+                    for channel_id in guild.channels.keys() {
+                        cache.channels.insert(*channel_id, guild.id);
                     }
+
+                    cache.guilds.insert(guild.id, guild); // moved, not cloned
                 }
                 ReadyGuild::Unavailable(unavailable) => {
                     cache.guilds.remove(&unavailable.id);
